@@ -4,8 +4,8 @@ import Products from "./components/Shop/Products";
 import { useSelector } from "react-redux/es/hooks/useSelector";
 import { Fragment, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { uiActions } from "./Store/ui-slice";
 import Notification from "./components/UI/Notification";
+import { fetchCartData, sendCartData } from "./Store/cart-actions";
 
 let isInitial = true;
 
@@ -16,57 +16,27 @@ function App() {
   const notification = useSelector((state) => state.ui.notification);
 
   useEffect(() => {
-    const sentCartData = async () => {
-      dispatch(
-        uiActions.showNotification({
-          status: "pending",
-          title: "Sending...",
-          message: "Sending cart data!",
-        })
-      );
-      const response = await fetch(
-        "https://shoping-app-21a38-default-rtdb.firebaseio.com/cart.json",
-        {
-          method: "PUT",
-          body: JSON.stringify(cart),
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Sending cart data failed.");
-      }
-      dispatch(
-        uiActions.showNotification({
-          status: "success",
-          title: "Success...",
-          message: "Sent cart data successfully!",
-        })
-      );
-    };
+    dispatch(fetchCartData());
+  }, [dispatch]);
 
+  useEffect(() => {
     if (isInitial) {
-      isInitial= false
+      isInitial = false;
       return;
     }
-
-    sentCartData().catch((error) => {
-      dispatch(
-        uiActions.showNotification({
-          status: "error",
-          title: "Error...",
-          message: "Sending cart data failed!",
-        })
-      );
-    });
+    if (cart.changed) {
+      dispatch(sendCartData(cart));
+    }
   }, [cart, dispatch]);
 
   return (
     <Fragment>
       {notification && (
         <Notification
-        status={notification.status}
-        title={notification.title}
-        message={notification.message}
-      />      
+          status={notification.status}
+          title={notification.title}
+          message={notification.message}
+        />
       )}
       <Layout>
         {showCart && <Cart />}
